@@ -1,6 +1,7 @@
-package uni.tubingen.protein.inference.msbayes;
+package uni.tubingen.inference.msbayes;
 
 import org.knime.core.data.DataColumnSpec;
+import org.knime.core.data.DoubleValue;
 import org.knime.core.data.StringValue;
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
 import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelection;
@@ -30,9 +31,9 @@ public class MSBayesProNodeDialog extends DefaultNodeSettingsPane {
         
         //fields to match with coming table...
         final SettingsModelString matches_peptides  = new SettingsModelString(MSBayesProNodeModel.CFGKEY_PEPTIDES, "Peptides");
-        final SettingsModelString accsn_protein          = new SettingsModelString(MSBayesProNodeModel.CFGKEY_PROTEIN, "Protein");
-        final SettingsModelString probabilities             = new SettingsModelString(MSBayesProNodeModel.CFGKEY_PROBABILITIES, "Probabilities");
-        final SettingsModelString detectability            = new SettingsModelString(MSBayesProNodeModel.CFGKEY_DETECTABILITY, "Detectabilities");
+        final SettingsModelString accsn_protein     = new SettingsModelString(MSBayesProNodeModel.CFGKEY_PROTEIN, "Protein");
+        final SettingsModelString probabilities     = new SettingsModelString(MSBayesProNodeModel.CFGKEY_PROBABILITIES, "Probabilities");
+        final SettingsModelString detectability     = new SettingsModelString(MSBayesProNodeModel.CFGKEY_DETECTABILITY, "Detectabilities");
         
 
         addDialogComponent(new DialogComponentColumnNameSelection(accsn_protein, "Proteins Column", 0, true, StringValue.class));
@@ -58,8 +59,8 @@ public class MSBayesProNodeDialog extends DefaultNodeSettingsPane {
         			
         		}));
         
-         addDialogComponent(new DialogComponentColumnNameSelection(probabilities, "Probabilities", 0, true, StringValue.class));
-         addDialogComponent(new DialogComponentColumnNameSelection(detectability, "Detectability", 0, true, StringValue.class));
+         addDialogComponent(new DialogComponentColumnNameSelection(probabilities, "Probabilities", 0, true, DoubleValue.class));
+         addDialogComponent(new DialogComponentColumnNameSelection(detectability, "Detectability", 0, true, DoubleValue.class));
 
     }
 }

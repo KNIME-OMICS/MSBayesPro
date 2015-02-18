@@ -1,17 +1,17 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: MSBayesPro-Node extension for KNIME Workbench
-Bundle-SymbolicName: uni.tubingen.protein.inference.msbayes; singleton:=true
+Bundle-SymbolicName: uni.tubingen.inference.msbayes;singleton:=true
 Bundle-Version: 1.0.0
 Bundle-ClassPath: msbayespro.jar,
  lib/commons-lang3-3.3.2.jar
-Bundle-Activator: uni.tubingen.protein.inference.msbayes.MSBayesProNodePlugin
+Bundle-Activator: uni.tubingen.inference.msbayes.MSBayesProNodePlugin
 Bundle-Vendor: enrique
 Require-Bundle: org.eclipse.core.runtime,
  org.knime.workbench.core,
  org.knime.workbench.repository,
  org.knime.base,
- org.junit
+ org.apache.commons.lang3;bundle-version="3.2.1"
 Bundle-ActivationPolicy: lazy
-Export-Package: uni.tubingen.protein.inference.msbayes
-
+Export-Package: uni.tubingen.inference.msbayes
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6

@@ -2,7 +2,7 @@
  * $Revision$ $Date$ $Author$
  *
  */
-package uni.tubingen.protein.inference.msbayes;
+package uni.tubingen.inference.msbayes;
 
 import org.eclipse.core.runtime.Plugin;
 import org.osgi.framework.BundleContext;

@@ -1,4 +1,4 @@
-package uni.tubingen.protein.inference.msbayes;
+package uni.tubingen.inference.msbayes;
 
 import org.knime.core.node.NodeView;
 

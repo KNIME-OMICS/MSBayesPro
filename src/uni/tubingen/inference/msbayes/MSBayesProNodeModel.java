@@ -1,12 +1,10 @@
-package uni.tubingen.protein.inference.msbayes;
+package uni.tubingen.inference.msbayes;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
@@ -15,6 +13,7 @@ import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
 import org.knime.core.data.DataRow;
 import org.knime.core.data.DataTableSpec;
+import org.knime.core.data.DoubleValue;
 import org.knime.core.data.RowIterator;
 import org.knime.core.data.RowKey;
 import org.knime.core.data.StringValue;
@@ -41,8 +40,7 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
  */
 public class MSBayesProNodeModel extends NodeModel {
 	
-	
-private static final NodeLogger logger = NodeLogger.getLogger("MSBayesPro probabilities");
+	private static final NodeLogger logger = NodeLogger.getLogger("MSBayesPro probabilities");
 
     
     static String CFGKEY_PEPTIDES = "peptides";
@@ -64,8 +62,8 @@ private static final NodeLogger logger = NodeLogger.getLogger("MSBayesPro probab
 		
 		static BufferedDataContainer container = null;
 		
-		private static File  temporal_probability_file = null;
-		private static File  temporal_dtectability_file = null;
+		private File temporal_probability_file = null;
+		private File temporal_detectability_file = null;
     
     /**
      * Constructor for the node model.
@@ -74,6 +72,9 @@ private static final NodeLogger logger = NodeLogger.getLogger("MSBayesPro probab
     
         // TODO: Specify the amount of input and output ports needed.
         super(1, 1);
+        
+        temporal_probability_file = null;
+        temporal_detectability_file = null;
     }
 
     /**
@@ -88,17 +89,18 @@ private static final NodeLogger logger = NodeLogger.getLogger("MSBayesPro probab
            DataTableSpec new_spec_table = new DataTableSpec(make_output_spec());  	
            container = exec.createDataContainer(new_spec_table);
 
-           makeDetectabilityFile (inData[0]);
-           makeProbabilityFile (inData[0]);
+           makeDetectabilityFile(inData[0]);
+           makeProbabilityFile(inData[0]);
            
-           MsBayesPro process = MsBayesPro.getInstance( temporal_probability_file.getAbsolutePath(), temporal_dtectability_file.getAbsolutePath());
+           MsBayesPro process = new MsBayesPro( temporal_probability_file.getAbsolutePath(), temporal_detectability_file.getAbsolutePath());
            HashMap <String, String> tem_map =  process.computeProteinInference();
            writteContainer (tem_map);
     	   container.close();
-    	
-    	   temporal_probability_file.delete();
-    	   temporal_dtectability_file.delete();
     	   
+    	   temporal_probability_file.delete();
+    	   temporal_detectability_file.delete();
+    	   
+    	
     	   return new BufferedDataTable[]{ container.getTable() };
     }
     
@@ -131,9 +133,9 @@ private static final NodeLogger logger = NodeLogger.getLogger("MSBayesPro probab
       
     private void makeDetectabilityFile (BufferedDataTable data_table) throws IOException{
     	  
-    	  temporal_dtectability_file = File.createTempFile("msbayes_detectability_file", ".txt");
-      	  PrintWriter pw = new PrintWriter(new FileWriter(temporal_dtectability_file));
-      	  System.out.println(getFileCurrentPath(temporal_dtectability_file));
+    	  temporal_detectability_file = File.createTempFile("msbayes_detectability_file", ".txt");
+      	  PrintWriter pw = new PrintWriter(new FileWriter(temporal_detectability_file));
+      	  System.out.println(getFileCurrentPath(temporal_detectability_file));
   		
     	   try {			
 	  
@@ -156,7 +158,7 @@ private static final NodeLogger logger = NodeLogger.getLogger("MSBayesPro probab
 	    		//getting value from cells
 	    		String peptide_entry   =   ((StringValue) pep_cell).getStringValue();
 	    		String protein_accsn   =   ((StringValue) accsn_cell).getStringValue();
-	    		String detect_entry    =   ((StringValue) detect_cell).getStringValue();
+	    		Double detect_entry    =   ((DoubleValue) detect_cell).getDoubleValue();
 	    		 
 	    		String [] protein_group = protein_accsn.split(";");
 	    		 
@@ -190,7 +192,7 @@ private static final NodeLogger logger = NodeLogger.getLogger("MSBayesPro probab
 	}
       
       //This function build probability file   
-      private static void makeProbabilityFile (BufferedDataTable data_table) throws IOException{
+      private void makeProbabilityFile (BufferedDataTable data_table) throws IOException{
     	 
     	  temporal_probability_file = File.createTempFile("ms_bayes_probability_file", ".txt");
       	  PrintWriter pw = new PrintWriter(new FileWriter(temporal_probability_file));
@@ -212,7 +214,7 @@ private static final NodeLogger logger = NodeLogger.getLogger("MSBayesPro probab
 	    		
 	    		//getting value from cells
 	    		String peptide_entry   =   ((StringValue) pep_cell).getStringValue();
-	    		String proba_entry    =   ((StringValue) proba_cell).getStringValue();
+	    		Double proba_entry    =   ((DoubleValue) proba_cell).getDoubleValue();
 	    		 		
 	             pw.println(peptide_entry + "\t" + proba_entry);
 	    	     	 

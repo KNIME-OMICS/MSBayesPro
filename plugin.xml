@@ -18,8 +18,8 @@
          point="org.knime.workbench.repository.nodes">
       <node
             category-path="/"
-            factory-class="uni.tubingen.protein.inference.msbayes.MSBayesProNodeFactory"
-            id="uni.tubingen.protein.inference.msbayes.MSBayesProNodeFactory"/>
+            factory-class="uni.tubingen.inference.msbayes.MSBayesProNodeFactory"
+            id="uni.tubingen.inference.msbayes.MSBayesProNodeFactory"/>
    </extension>
    
 </plugin>
