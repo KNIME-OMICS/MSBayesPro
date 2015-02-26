@@ -68,6 +68,11 @@ public class MsBayesPro {
         	}
         	stdError.close();
         	
+        	// readme of MSBAyesPro:
+        	// When interpreting the result, use MAP_state_by_Memorizing to tell whether a protein exist,
+        	// and use Positive_Probability_by_memorizing (the marginal posterior probability) as a confidence
+        	// measure for protein identification. Notice that proteins with MAP_state_by_Memorizing = 1 could
+        	// have posterior probability < 0.5. 
         	BufferedReader reader_file = new BufferedReader (new FileReader (new File(PEPTIDE_PROBABILITY_FILE+".quantify.bayes53ss")));
         	while ((s = reader_file.readLine()) != null) {
         		if(s.startsWith("protein")) { //avoiding header from output file
@@ -75,17 +80,22 @@ public class MsBayesPro {
         		}
         		
         		protein_proba = s.split(regex);
-        		proba_protList.put(protein_proba[0], protein_proba[8]);
-        		// System.out.println(s);
+        		// MAP_state_by_Memorizing = protein_proba[2]
+        		// Positive_Probability_by_memorizing = protein_proba[4]
+        		//proba_protList.put(protein_proba[0], protein_proba[8]);
+        		
+        		if (protein_proba[2].equals("1")) {
+            		proba_protList.put(protein_proba[0], protein_proba[4]);
+        		}
         	}
         	reader_file.close();
         	
         	// delete the temporal files of MSBayesPro
-        	File tmpFile = new File(PEPTIDE_PROBABILITY_FILE+".quantify.bayes53ss");
+        	File tmpFile = new File(PEPTIDE_PROBABILITY_FILE + ".quantify.bayes53ss");
         	tmpFile.delete();
-        	tmpFile = new File(PEPTIDE_PROBABILITY_FILE+".quantify.bayes53");
+        	tmpFile = new File(PEPTIDE_PROBABILITY_FILE + ".quantify.bayes53");
         	tmpFile.delete();
-        	tmpFile = new File(PEPTIDE_PROBABILITY_FILE+".quantify.peppost");
+        	tmpFile = new File(PEPTIDE_PROBABILITY_FILE + ".quantify.peppost");
         	tmpFile.delete();
         } catch (IOException e) {
         	System.out.println("exception happened - here's what I know: ");
