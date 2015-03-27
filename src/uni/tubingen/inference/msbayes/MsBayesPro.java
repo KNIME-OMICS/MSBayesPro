@@ -3,9 +3,11 @@ package uni.tubingen.inference.msbayes;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 //This class is a wrapper for command-line tool MSBayesPro. It too perform parser for standard output (protein probability file).
 
@@ -16,8 +18,6 @@ public class MsBayesPro {
 
 	private String PEPTIDE_PROTEIN_DETECTABILITY_FILE = null;
 
-    private static final String MSBayesPro_COMMAND = "MSBayesPro.linux64";  //command for run MSBayesPro in console (linux)
-    
     private static final String MSBAYESPRO_PARAMETER_1 = "-pospep"; //passing probability file
     
     private static final String MSBAYESPRO_PARAMETER_2 = "-detectability"; //passing detectability file
@@ -45,7 +45,18 @@ public class MsBayesPro {
         String regex = "\t";
 
         try {
-        	ProcessBuilder pb = new ProcessBuilder(MSBayesPro_COMMAND, MSBAYESPRO_PARAMETER_1, PEPTIDE_PROBABILITY_FILE, MSBAYESPRO_PARAMETER_2, PEPTIDE_PROTEIN_DETECTABILITY_FILE, MSBAYESPRO_PARAMETER_3 );
+        	
+        	String msbayesPath = this.getClass().getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
+			if (!msbayesPath.endsWith(File.separator)) {
+				// we are in the jar, only get the path to it
+				msbayesPath = msbayesPath.substring(0, msbayesPath.lastIndexOf(File.separator) + 1);
+			}
+			msbayesPath += "executables" + File.separator + "MSBayesPro.linux64";
+        	
+        	ProcessBuilder pb = new ProcessBuilder(msbayesPath,
+        			MSBAYESPRO_PARAMETER_1, PEPTIDE_PROBABILITY_FILE,
+        			MSBAYESPRO_PARAMETER_2, PEPTIDE_PROTEIN_DETECTABILITY_FILE,
+        			MSBAYESPRO_PARAMETER_3 );
         	pb.directory(null);
             
         	Process p = pb.start(); //running command-line tool (MSBayesPro)
@@ -74,20 +85,69 @@ public class MsBayesPro {
         	// measure for protein identification. Notice that proteins with MAP_state_by_Memorizing = 1 could
         	// have posterior probability < 0.5. 
         	BufferedReader reader_file = new BufferedReader (new FileReader (new File(PEPTIDE_PROBABILITY_FILE+".quantify.bayes53ss")));
+        	
+        	// 1) collect all proteins in the group
+        	// 2) all with MAP_state_by_Memorizing=1 will be reported
+        	// 3) directly following ones with same "Positive_Probability_by_memorizing" are in one group
+        	int groupCount = 0;
+        	
+        	// the last group, mapping from the probability to the accessions
+        	String lastProbability = null;
+        	List<String> lastAccessions = null;
         	while ((s = reader_file.readLine()) != null) {
         		if(s.startsWith("protein")) { //avoiding header from output file
         			continue;
         		}
         		
         		protein_proba = s.split(regex);
+        		
+        		groupCount--;
+        		if ((groupCount < 1) || !protein_proba[4].equals(lastProbability)) {
+        			// add the last group
+        			if (lastProbability != null) {
+        				StringBuilder accs = new StringBuilder();
+        				for (String acc : lastAccessions) {
+        					if (accs.length() > 0) {
+        						accs.append(";");
+        					}
+    						accs.append(acc);
+        				}
+        				
+        				proba_protList.put(accs.toString(), lastProbability);
+        			}
+        			
+        			lastAccessions = new ArrayList<String>();
+        		}
+        		
+        		if (groupCount < 1) {
+        			// NO. of proteins = protein_proba[7]
+        			groupCount = Integer.parseInt(protein_proba[7]);
+        		}
+        		
         		// MAP_state_by_Memorizing = protein_proba[2]
         		// Positive_Probability_by_memorizing = protein_proba[4]
-        		//proba_protList.put(protein_proba[0], protein_proba[8]);
+        		// proba_protList.put(protein_proba[0], protein_proba[8]);
         		
         		if (protein_proba[2].equals("1")) {
-            		proba_protList.put(protein_proba[0], protein_proba[4]);
+            		lastProbability = protein_proba[4];
+            		lastAccessions.add(protein_proba[0]);
+        		} else {
+        			lastProbability = null;
         		}
         	}
+        	
+        	if (lastProbability != null) {
+				StringBuilder accs = new StringBuilder();
+				for (String acc : lastAccessions) {
+					if (accs.length() > 0) {
+						accs.append(";");
+					}
+					accs.append(acc);
+				}
+				
+    			proba_protList.put(accs.toString(), lastProbability);
+			}
+        	
         	reader_file.close();
         	
         	// delete the temporal files of MSBayesPro
@@ -97,10 +157,8 @@ public class MsBayesPro {
         	tmpFile.delete();
         	tmpFile = new File(PEPTIDE_PROBABILITY_FILE + ".quantify.peppost");
         	tmpFile.delete();
-        } catch (IOException e) {
-        	System.out.println("exception happened - here's what I know: ");
-        	e.printStackTrace();
-           // System.exit(-1);
+        } catch (Exception e) {
+        	MSBayesProNodeModel.logger.error("exception while executing MSBayesPro" , e);
         }
         
         return proba_protList;

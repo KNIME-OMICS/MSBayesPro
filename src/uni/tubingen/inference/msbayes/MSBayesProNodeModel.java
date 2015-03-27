@@ -41,7 +41,7 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
  */
 public class MSBayesProNodeModel extends NodeModel {
 	
-	private static final NodeLogger logger = NodeLogger.getLogger("MSBayesPro probabilities");
+	protected static final NodeLogger logger = NodeLogger.getLogger("MSBayesPro probabilities");
 	
 	static String CFGKEY_PEPTIDES = "peptides";
 	static String CFGKEY_PROTEIN = "protein";
@@ -226,8 +226,17 @@ public class MSBayesProNodeModel extends NodeModel {
 			}
 			
 			RowKey key = new RowKey(acc_protein);
-			DataCell[] cells = new DataCell[2];	    		
-			cells[0] = new StringCell(proteinLongnames.get(Integer.parseInt(acc_protein)-100));
+			DataCell[] cells = new DataCell[2];
+			
+			StringBuilder accs = new StringBuilder();
+			for (String acc : acc_protein.split(";")) {
+				if (accs.length() > 0) {
+					accs.append(";");
+				}
+				accs.append(proteinLongnames.get(Integer.parseInt(acc)-100));
+			}
+			
+			cells[0] = new StringCell(accs.toString());
 			cells[1] = new StringCell(protein_proba.get(acc_protein));
 			
 			DataRow row = new DefaultRow(key, cells);
