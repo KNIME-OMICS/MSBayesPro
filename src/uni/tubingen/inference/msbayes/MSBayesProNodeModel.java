@@ -19,6 +19,8 @@ import org.knime.core.data.RowIterator;
 import org.knime.core.data.RowKey;
 import org.knime.core.data.StringValue;
 import org.knime.core.data.def.DefaultRow;
+import org.knime.core.data.def.DoubleCell;
+import org.knime.core.data.def.IntCell;
 import org.knime.core.data.def.StringCell;
 import org.knime.core.node.BufferedDataContainer;
 import org.knime.core.node.BufferedDataTable;
@@ -41,7 +43,7 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
  */
 public class MSBayesProNodeModel extends NodeModel {
 	
-	protected static final NodeLogger logger = NodeLogger.getLogger("MSBayesPro probabilities");
+	protected static final NodeLogger logger = NodeLogger.getLogger(MSBayesProNodeModel.class);
 	
 	static String CFGKEY_PEPTIDES = "peptides";
 	static String CFGKEY_PROTEIN = "protein";
@@ -91,9 +93,9 @@ public class MSBayesProNodeModel extends NodeModel {
 		createDetectabilityFile(inData[0]);
 		createProbabilityFile(inData[0]);
 		
-		MsBayesPro process = new MsBayesPro( temporal_probability_file.getAbsolutePath(), temporal_detectability_file.getAbsolutePath());
-		HashMap<String, String> tem_map = process.computeProteinInference();
-		writeToContainer(container, tem_map);
+		MsBayesPro process = new MsBayesPro(temporal_probability_file.getAbsolutePath(), temporal_detectability_file.getAbsolutePath());
+		HashMap<String, Number[]> proteinsMap = process.computeProteinInference();
+		writeToContainer(container, proteinsMap);
 		container.close();
 		
 		temporal_probability_file.delete();
@@ -125,9 +127,11 @@ public class MSBayesProNodeModel extends NodeModel {
 	 * @return
 	 */
 	private DataColumnSpec[]  make_output_spec() {  	
-		DataColumnSpec cols[] = new DataColumnSpec[2];
+		DataColumnSpec cols[] = new DataColumnSpec[4];
 		cols[0] = new DataColumnSpecCreator("Protein ID", StringCell.TYPE).createSpec();
-		cols[1] = new DataColumnSpecCreator("MSBayes Probability", StringCell.TYPE).createSpec();
+		cols[1] = new DataColumnSpecCreator("MSBayes Probability", DoubleCell.TYPE).createSpec();
+		cols[2] = new DataColumnSpecCreator("nrPeptidesMod", IntCell.TYPE).createSpec();
+		cols[3] = new DataColumnSpecCreator("nrPeptides", IntCell.TYPE).createSpec();
 		
 		return cols;
 	}
@@ -215,21 +219,21 @@ public class MSBayesProNodeModel extends NodeModel {
 	
 	/**
 	 * print the proteins and their probabilities in descending order.
-	 * @param protein_proba
+	 * @param proteinMap
 	 */
-	private void writeToContainer(BufferedDataContainer container, HashMap<String, String> protein_proba) {
-		Set<String> set_protein = protein_proba.keySet();
+	private void writeToContainer(BufferedDataContainer container, HashMap<String, Number[]> proteinMap) {
+		Set<String> set_protein = proteinMap.keySet();
 		
-		for(String acc_protein : set_protein) {
-			if(acc_protein==null){
+		for(String proteinIDs : set_protein) {
+			if(proteinIDs==null){
 				continue;
 			}
 			
-			RowKey key = new RowKey(acc_protein);
-			DataCell[] cells = new DataCell[2];
+			RowKey key = new RowKey(proteinIDs);
+			DataCell[] cells = new DataCell[4];
 			
 			StringBuilder accs = new StringBuilder();
-			for (String acc : acc_protein.split(";")) {
+			for (String acc : proteinIDs.split(";")) {
 				if (accs.length() > 0) {
 					accs.append(";");
 				}
@@ -237,7 +241,11 @@ public class MSBayesProNodeModel extends NodeModel {
 			}
 			
 			cells[0] = new StringCell(accs.toString());
-			cells[1] = new StringCell(protein_proba.get(acc_protein));
+			
+			Number[] values = proteinMap.get(proteinIDs);
+			cells[1] = new DoubleCell(values[0].doubleValue());
+			cells[2] = new IntCell(values[1].intValue());
+			cells[3] = new IntCell(values[2].intValue());
 			
 			DataRow row = new DefaultRow(key, cells);
 			container.addRowToTable(row);
