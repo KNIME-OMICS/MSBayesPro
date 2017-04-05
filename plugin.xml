@@ -17,9 +17,17 @@
    <extension
          point="org.knime.workbench.repository.nodes">
       <node
-            category-path="/"
+            category-path="/community/protein-inference"
             factory-class="uni.tubingen.inference.msbayes.MSBayesProNodeFactory"
             id="uni.tubingen.inference.msbayes.MSBayesProNodeFactory"/>
+   </extension>
+   <extension
+         point="org.knime.workbench.repository.categories">
+      <category
+            level-id="protein-inference"
+            name="Protein Inference"
+            path="/community">
+      </category>
    </extension>
    
 </plugin>
